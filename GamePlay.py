@@ -46,6 +46,8 @@ class GamePlay:
         self.animation = None
         self.message = None
         self.last_move = None
+        self.scored = False
+        self.score = {1: 0, 2: 0}
         self.reset()
 
     def __del__(self):
@@ -71,6 +73,7 @@ class GamePlay:
         self.exploding = False
         self.message = None
         self.last_move = None
+        self.scored = False
         self.stop_animation()
         pygame.mixer.stop()
 
@@ -84,6 +87,9 @@ class GamePlay:
         return self.animation is not None
 
     def game_over(self):
+        if not self.board.is_ongoing() and not self.scored:
+            self.scored = True
+            self.score[self.board.won()] += 1
         return not self.board.is_ongoing()
 
     def continue_spill(self):
@@ -108,6 +114,7 @@ class GamePlay:
             # Quit on QUIT or q
             if event.type == pygame.QUIT or\
                     (event.type == pygame.KEYDOWN and (event.key == pygame.K_q or event.key == pygame.K_ESCAPE)):
+                print(f'Final score: {self.score}')
                 self.running = False
             # Reset on r
             if event.type == pygame.KEYUP and event.key == pygame.K_r:
