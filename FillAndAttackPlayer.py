@@ -1,10 +1,11 @@
 import numpy
+import random
 
 
 class FillAndAttackPlayer:
 
-    def __init__(self):
-        pass
+    def __init__(self, randomize=0):
+        self.randomize = randomize
 
     @staticmethod
     def dangerous(pos, player, board):
@@ -14,9 +15,13 @@ class FillAndAttackPlayer:
                 return True
         return False
 
-    @staticmethod
-    def next_move(player, board, _):
+    def next_move(self, player, board, _):
+        if random.random() < self.randomize:
+            print("Random move! Haha!")
+            return random.choice([pos for pos, owner in numpy.ndenumerate(board.owner)
+                                  if owner == 0 or owner == player])
         own_plays = [pos for pos, owner in numpy.ndenumerate(board.owner) if owner == player]
+        random.shuffle(own_plays)
         # See if one could explode
         for possible_play in own_plays:
             if board.board[possible_play] + 1 == board.neighbors(possible_play):
@@ -41,8 +46,8 @@ class FillAndAttackPlayer:
         empty_fields = [pos for pos, owner in numpy.ndenumerate(board.owner) if owner == 0]
         if len(empty_fields) == 0:
             print("No empty fields.")
-            return own_plays[0]
+            return random.choice(own_plays)
         else:
             print("Selecting empty field.")
-            return empty_fields[0]
+            return random.choice(empty_fields)
 
