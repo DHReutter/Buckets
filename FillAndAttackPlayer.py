@@ -1,10 +1,12 @@
 import numpy
 import random
+from BasePlayer import BasePlayer
 
 
-class FillAndAttackPlayer:
+class FillAndAttackPlayer(BasePlayer):
 
     def __init__(self, randomize=0):
+        super().__init__()
         self.randomize = randomize
 
     @staticmethod
@@ -15,7 +17,8 @@ class FillAndAttackPlayer:
                 return True
         return False
 
-    def next_move(self, player, board, _):
+    def next_move(self, player, board, last_move):
+        super().next_move(player, board, last_move)
         if random.random() < self.randomize:
             print("Random move! Haha!")
             return random.choice([pos for pos, owner in numpy.ndenumerate(board.owner)
@@ -25,7 +28,7 @@ class FillAndAttackPlayer:
         # See if one could explode
         for possible_play in own_plays:
             if board.board[possible_play] + 1 == board.neighbors(possible_play):
-                print("Possible spilling at {possible_play}")
+                print(f"Possible spilling at {possible_play}")
                 for neighbor in board.neighbor_positions(possible_play):
                     if board.owner[neighbor] != 0 and board.owner[neighbor] != player:
                         print("ATTACKING!")
@@ -50,4 +53,3 @@ class FillAndAttackPlayer:
         else:
             print("Selecting empty field.")
             return random.choice(empty_fields)
-
