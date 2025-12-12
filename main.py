@@ -1,7 +1,8 @@
-from GamePlay import GamePlay
-import RandomPlayer
-import FillAndAttackPlayer
-import MirrorPlayer
+from GameSimulation import simulate_game
+# from GamePlay import play_game
+from RandomPlayer import RandomPlayer
+# import FillAndAttackPlayer
+# import MirrorPlayer
 
 
 class Configuration:
@@ -12,17 +13,10 @@ class Configuration:
     player_colors = {1: "orange", 2: "lightblue"}
     fps = 60
     explosion_frames = 20
-    player = {1: FillAndAttackPlayer.FillAndAttackPlayer(), 2: FillAndAttackPlayer.FillAndAttackPlayer()}
+    player = {1: RandomPlayer(), 2: RandomPlayer()}
     sound = False
 
 
 if __name__ == '__main__':
-    game = GamePlay(Configuration)
-    while game.running:
-        # Main Loop
-        game.set_name()
-        game.continue_spill()
-        game.event_handling()
-        game.make_ai_move()
-        game.draw()
+    simulate_game(Configuration, 200, True)
     exit(0)

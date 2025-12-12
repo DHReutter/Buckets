@@ -62,8 +62,8 @@ class GamePlay(GameSimulation):
         self.animation = None
         pygame.mixer.stop()
 
-    def reset(self):
-        super().reset()
+    def reset(self, start_player=1):
+        super().reset(start_player)
         self.exploding = False
         self.message = None
         self.stop_animation()
@@ -79,16 +79,13 @@ class GamePlay(GameSimulation):
         return self.animation is not None
 
     def continue_spill(self):
-        if self.exploding and not self.is_animating():
-            self.board.spill_once(self.last_player)
-            if self.board.determine_spills().any():
+        if not self.is_animating():
+            if super().continue_spill():
                 self.start_animation(ExplodeAnimation)
-            else:
-                self.exploding = False
+        return self.exploding
 
     def make_move(self, pos):
         super().make_move(pos)
-        self.exploding = self.board.determine_spills().any()
         if self.exploding:
             self.start_animation(ExplodeAnimation)
 
@@ -148,3 +145,13 @@ class GamePlay(GameSimulation):
         message_size = self.font.get_rect(text).size
         message_pos = tt_sub(t_mul(self.screen_size, 0.5), t_mul(message_size, 0.5))
         self.font.render_to(self.screen, message_pos, text, fgcolor=color, bgcolor='black')
+
+
+def play_game(config):
+    game = GamePlay(config)
+    while game.running:
+        game.set_name()
+        game.continue_spill()
+        game.event_handling()
+        game.make_ai_move()
+        game.draw()
