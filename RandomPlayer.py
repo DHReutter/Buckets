@@ -1,13 +1,14 @@
 import numpy
 import random
+from BasePlayer import BasePlayer
 
 
-class RandomPlayer:
+class RandomPlayer(BasePlayer):
 
     def __init__(self):
+        super().__init__()
         pass
 
-    @staticmethod
-    def next_move(player, board, _):
-        possible_plays = [pos for pos, owner in numpy.ndenumerate(board.owner) if owner == 0 or owner == player]
-        return random.choice(possible_plays)
+    def next_move(self, player, board, last_move):
+        super().next_move(player, board, last_move)
+        return random.choice(self.possible_plays)
