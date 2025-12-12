@@ -13,11 +13,11 @@ class GameBoard:
         return all(0 <= x < self.size for x in pos)
 
     def placeable(self, player, pos):
-        assert(self.legal_position(pos))
+        assert self.legal_position(pos)
         return self.owner[pos] == 0 or self.owner[pos] == player
 
     def place(self, player, pos):
-        assert(self.placeable(player, pos))
+        assert self.placeable(player, pos)
         self.board[pos] = self.board[pos] + 1
         self.owner[pos] = player
 
