@@ -2,6 +2,7 @@ import pygame
 import pygame.freetype
 import numpy
 from TupleOperations import *
+from GameSimulation import GameSimulation
 from GameBoard import GameBoard
 from Animations import ExplodeAnimation
 import matplotlib.pyplot as plt
@@ -25,29 +26,24 @@ def make_sound(game_board, duration):
     # for position in (p for p, spilling in numpy.ndenumerate(game_board.determine_spills()) if spilling):
 
 
-class GamePlay:
+class GamePlay(GameSimulation):
     def __init__(self, config):
         # PyGame initialization.
         pygame.init()
         pygame.freetype.init()
         pygame.mixer.init(channels=4, size=16)
+        # Super init
+        super().__init__(config)
         # Other initializations.
-        self.config = config
         self.running = True
         self.screen_size = t_mul(self.config.field_size_px, self.config.board_size)
         self.screen = pygame.display.set_mode(self.screen_size)
         self.font = pygame.freetype.SysFont(self.config.font_name, self.config.font_size)
         self.clock = pygame.time.Clock()
         # State variables.
-        self.board = None
-        self.last_player = None
-        self.current_player = None
         self.exploding = None
         self.animation = None
         self.message = None
-        self.last_move = None
-        self.scored = False
-        self.score = {1: 0, 2: 0}
         self.reset()
 
     def __del__(self):
@@ -67,13 +63,9 @@ class GamePlay:
         pygame.mixer.stop()
 
     def reset(self):
-        self.board = GameBoard(self.config.board_size)
-        self.last_player = 0
-        self.current_player = 1
+        super().reset()
         self.exploding = False
         self.message = None
-        self.last_move = None
-        self.scored = False
         self.stop_animation()
         pygame.mixer.stop()
 
@@ -86,12 +78,6 @@ class GamePlay:
     def is_animating(self):
         return self.animation is not None
 
-    def game_over(self):
-        if not self.board.is_ongoing() and not self.scored:
-            self.scored = True
-            self.score[self.board.won()] += 1
-        return not self.board.is_ongoing()
-
     def continue_spill(self):
         if self.exploding and not self.is_animating():
             self.board.spill_once(self.last_player)
@@ -101,13 +87,10 @@ class GamePlay:
                 self.exploding = False
 
     def make_move(self, pos):
-        self.board.place(self.current_player, pos)
+        super().make_move(pos)
         self.exploding = self.board.determine_spills().any()
         if self.exploding:
             self.start_animation(ExplodeAnimation)
-        self.last_player = self.current_player
-        self.current_player = 3 - self.current_player
-        self.last_move = pos
 
     def event_handling(self):
         for event in pygame.event.get():
@@ -134,10 +117,8 @@ class GamePlay:
                 self.message = None
 
     def make_ai_move(self):
-        if self.config.player[self.current_player] != "HUMAN":
-            if not self.game_over() and not self.is_animating() and not self.exploding:
-                self.make_move(self.config.player[self.current_player].next_move(self.current_player, self.board,
-                                                                                 self.last_move))
+        if self.config.player[self.current_player] != "HUMAN" and not self.is_animating() and not self.exploding:
+            super().make_ai_move()
 
     def draw(self):
         self.clock.tick(self.config.fps)
