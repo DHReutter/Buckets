@@ -73,3 +73,9 @@ class GameBoard:
 
     def is_ongoing(self):
         return self.won() == 0
+
+    def print(self):
+        for y in range(0, self.size):
+            for x in range(0, self.size):
+                print(f"{self.owner[(x, y)]}:{self.board[(x, y)]} ", end="")
+            print("\n")
