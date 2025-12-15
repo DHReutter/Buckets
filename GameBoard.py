@@ -9,6 +9,12 @@ class GameBoard:
         self.place(1, (0, 0))
         self.place(2, (size - 1, size - 1))
 
+    def pos2idx(self, pos):
+        return pos[0] + pos[1]*self.size
+
+    def idx2pos(self, idx):
+        return idx % self.size, idx // self.size
+
     def legal_position(self, pos):
         return all(0 <= x < self.size for x in pos)
 

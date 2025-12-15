@@ -1,4 +1,5 @@
 from RandomPlayer import RandomPlayer
+from AiPlayer import AiPlayer
 
 
 class Configuration:
@@ -9,5 +10,5 @@ class Configuration:
     player_colors = {1: "orange", 2: "lightblue"}
     fps = 60
     explosion_frames = 20
-    player = {1: RandomPlayer(), 2: RandomPlayer()}
+    player = {1: AiPlayer(board_size), 2: RandomPlayer()}
     sound = False
