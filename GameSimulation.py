@@ -65,6 +65,7 @@ class GameSimulation:
 def simulate_game(config, repetitions=1, alternate_players=False):
     game = GameSimulation(config)
     start_player = 1
+    rolling_mean = [0.0] * 100
     for i in range(0, repetitions):
         print(f"Game #{i+1} of {repetitions}, Player #{start_player} begins", end=" ")
         while not game.game_over():
@@ -72,7 +73,8 @@ def simulate_game(config, repetitions=1, alternate_players=False):
             while game.continue_spill() and not game.game_over():
                 pass
             game.make_ai_move()
-        print(f"Player #{game.board.won()} won ({round(game.win_loss_ratio(1) * 100, 1)}%).")
+        rolling_mean[i % 100] = game.win_loss_ratio(1)
+        print(f"Player #{game.board.won()} won ({round(sum(rolling_mean), 1)}%).")
         if alternate_players:
             start_player = 3 - start_player
         game.reset(start_player=start_player)

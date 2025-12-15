@@ -102,7 +102,7 @@ class GamePlay(GameSimulation):
             # User move, only performed when game is not running
             if not self.game_over() and not self.is_animating() and not self.exploding:
                 # Click in field
-                if self.config.player[self.current_player] == 'HUMAN':
+                if self.config.player[self.current_player].is_human():
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         pos = tuple(numpy.floor(numpy.divide(pygame.mouse.get_pos(),
                                                              self.config.field_size_px)).astype(int))
@@ -114,7 +114,7 @@ class GamePlay(GameSimulation):
                 self.message = None
 
     def make_ai_move(self):
-        if self.config.player[self.current_player] != "HUMAN" and not self.is_animating() and not self.exploding:
+        if not self.config.player[self.current_player].is_human() and not self.is_animating() and not self.exploding:
             super().make_ai_move()
 
     def draw(self):

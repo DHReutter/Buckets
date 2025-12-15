@@ -5,10 +5,13 @@ class BasePlayer:
     def __init__(self):
         self.possible_plays = []
         self.possible_mask = None
-        pass
+        self.human = False
 
     def pre_game_action(self, player, board):
         pass
+
+    def is_human(self):
+        return self.human
 
     def set_possible_plays(self, player, board):
         self.possible_plays = []
