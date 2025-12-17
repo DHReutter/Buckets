@@ -38,12 +38,28 @@ class Actor(nn.Module):
 
 
 class AiPlayer(BasePlayer):
-    def __init__(self, board_size):
+
+    class DataPoint:
+        def __init__(self, log_prob, entropy):
+            self.log_prob = log_prob
+            self.reward = 0
+            self.entropy = entropy
+
+
+    def __init__(self):
         super().__init__()
-        self.board_size = board_size
-        self.actor = Actor(board_size)
-        self.optimizer = optim.Adam(self.actor.parameters(), lr=0.001)
-        self.trajectory = {}
+        self.actor = None
+        self.optimizer = None
+        self.trajectory = []
+        self.number_moves_won = []
+
+    def set_config(self, config):
+        super().set_config(config)
+        self.actor = Actor(self.config.board_size)
+        self.optimizer = optim.Adam(self.actor.parameters(), lr=self.config.Ai.learn_rate)
+        self.trajectory = []
+        self.number_moves_won = []
+
 
     @staticmethod
     def encode_board(player, board, last_move):
@@ -67,13 +83,42 @@ class AiPlayer(BasePlayer):
         return torch.tensor(flat_board, dtype=torch.float32)
 
     def pre_game_action(self, player, board):
-        self.trajectory = {}
+        super().pre_game_action(player, board)
+        self.trajectory = []
+
+    def mean_moves(self):
+        if self.number_moves_won:
+            return sum(self.number_moves_won) / len(self.number_moves_won)
+        else:
+            return self.move_number
+
+    def beta(self):
+        b_lo = self.config.Ai.beta[0]
+        b_hi = self.config.Ai.beta[1]
+        onset = self.config.Ai.beta_onset
+        cutoff = self.config.Ai.beta_cutoff
+        win_ratio = self.win_ratio()
+        if win_ratio < onset:
+            return b_hi
+        elif win_ratio > cutoff:
+            return b_lo
+        else:
+            factor = (win_ratio - onset) / (cutoff - onset)
+            return b_lo + (b_hi - b_lo) * factor
 
     def post_game_action(self, player, board):
-        final_reward = 1.0 if board.won() == player else -1.0
+        super().post_game_action(player, board)
+        if board.won():
+            final_reward, reward_ratio = self.config.Ai.reward_won
+            final_reward *= (self.mean_moves() / self.move_number) ** self.config.Ai.fast_game_weight
+            self.number_moves_won += [self.move_number]
+        else:
+            final_reward, reward_ratio = self.config.Ai.reward_lost
         losses = []
-        for log_prob, reward in self.trajectory.items():
-            losses.append(-log_prob * (reward + final_reward))
+        for p in self.trajectory:
+            combined_reward = final_reward + p.reward * reward_ratio
+            loss = (-p.log_prob * combined_reward) - self.beta() * p.entropy
+            losses.append(loss)
         loss = torch.stack(losses).sum()
         self.optimizer.zero_grad()
         loss.backward()
@@ -81,9 +126,8 @@ class AiPlayer(BasePlayer):
 
     def ai_evaluate_last_move(self, player, board, last_move):
         if self.trajectory:
-            last_log_prob = list(self.trajectory.keys())[-1]
-            reward = evaluate_board(board, player) * 0.1
-            self.trajectory[last_log_prob] = reward
+            reward = evaluate_board(board, player)
+            self.trajectory[-1].reward = reward
 
     def ai_move(self, player, board, last_move):
         state = self.encode_board(player, board, last_move)
@@ -91,7 +135,7 @@ class AiPlayer(BasePlayer):
         dist = torch.distributions.Categorical(probs)
         action = dist.sample().item()
         log_prob = dist.log_prob(torch.tensor(action))
-        self.trajectory[log_prob] = 0
+        self.trajectory.append(self.DataPoint(log_prob, dist.entropy().mean()))
         return action
 
     def next_move(self, player, board, last_move):

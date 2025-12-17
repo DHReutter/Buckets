@@ -12,6 +12,8 @@ class GameSimulation:
         self.scored = False
         self.score = {1: 0, 2: 0}
         self.reset()
+        for p in self.config.player.values():
+            p.set_config(self.config)
 
     def reset(self, start_player=1):
         self.board = GameBoard(self.config.board_size)
@@ -62,19 +64,44 @@ class GameSimulation:
         self.board.print()
 
 
-def simulate_game(config, repetitions=1, alternate_players=False):
+def simulate_game(config):
     game = GameSimulation(config)
     start_player = 1
     rolling_mean = [0.0] * 100
-    for i in range(0, repetitions):
-        print(f"Game #{i+1} of {repetitions}, Player #{start_player} begins", end=" ")
+
+    alternate_players = False
+    if 'alternate_players' in dir(config.Simulation):
+        alternate_players = config.Simulation.alternate_players
+    repetitions = 1
+    if 'repetitions' in dir(config.Simulation):
+        repetitions = config.Simulation.repetitions
+    target_rate = None
+    if 'target_rate' in dir(config.Simulation):
+        target_rate = config.Simulation.target_rate
+        repetitions = f"TR{round(target_rate * 100, 1)}%"
+    running = True
+    i = 0
+    while running:
+        print(f"Game #{i+1} of {repetitions}, Player #{start_player} begins", end="... ")
         while not game.game_over():
-            print(".", end="")
             while game.continue_spill() and not game.game_over():
                 pass
             game.make_ai_move()
+        # Next game
         rolling_mean[i % 100] = game.win_loss_ratio(1)
-        print(f"Player #{game.board.won()} won ({round(sum(rolling_mean), 1)}%).")
+        mean_win_rate = sum(rolling_mean) / len(rolling_mean)
+        i += 1
+        target_rate_str = ""
+        if target_rate:
+            if mean_win_rate > target_rate:
+                running = False
+        elif i >= repetitions:
+            running = False
+        number_moves_str = str(config.player[1].move_number)
+        win_loss_str = "won " if game.board.won() == 1 else "lost"
+        win_rate_str = str(round(config.player[1].win_ratio() * 100, 1)) + "%"
+        rolling_mean_str = str(round(mean_win_rate * 100, 1)) + "%"
+        print(f"AI {win_loss_str} after {number_moves_str} moves [{win_rate_str} - {rolling_mean_str}]")
         if alternate_players:
             start_player = 3 - start_player
         game.reset(start_player=start_player)

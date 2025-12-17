@@ -5,7 +5,7 @@ from HumanPlayer import HumanPlayer
 
 if __name__ == '__main__':
     config = Configuration
-    simulate_game(config, 1000, True)
+    simulate_game(config)
     config.player[2] = HumanPlayer()
     play_game(config)
     exit(0)
